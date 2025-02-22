@@ -64,10 +64,14 @@ def retrieve_relevant_chunks(query: str, top_k: int = 5):
 
 
 def generate_response_with_gemini(question: str, context_chunks: list, citations: list):
-    """Generate an AI response using Gemini based on retrieved context."""
+    """Generate an AI response using Gemini based on retrieved context with Markdown formatting."""
     try:
         context_text = "\n\n".join(context_chunks[:5])  # Use top 5 retrieved chunks
-        citation_text = "\n".join(citations[:5])
+
+        # Format citations as markdown links
+        formatted_citations = "\n".join(
+            [f"- [{metadata.split(' by ')[0].strip()}]({metadata.split('[Source](')[-1].strip(')')})" for metadata in citations]
+        )
 
         prompt = f"""
         You are an AI medical assistant providing evidence-based, research-backed answers.
@@ -80,29 +84,43 @@ def generate_response_with_gemini(question: str, context_chunks: list, citations
         **Instructions:**
         - Provide a concise and informative answer to the user's question based on the provided context and widely accepted medical knowledge.
         - Do NOT provide official medical advice; this is for informational purposes only.
-        - Cite sources wherever applicable.
-        - After the answer, suggest 2-3 related follow-up questions that the user might find helpful.
-
+        - Embed citations as inline markdown links.
+        - After the answer, suggest 2-3 related follow-up questions.
+        - Recheck the answer for markdown syntax and readability.
+        - Do NOT include links in the answer; use citations instead like [[1]](link).
+        - Do NOT give unnecessary headings which are obvious like "Answer".
+    
         **References:**
-        {citation_text}
+        {formatted_citations}
         """
 
         response = gemini_model.generate_content(prompt)
         if response:
             response_text = response.text
+
+            # Extracting sections
+            answer = response_text.strip()
+            follow_up_questions = []
+
             if "**Follow-up Questions:**" in response_text:
                 answer, follow_up_section = response_text.split("**Follow-up Questions:**", 1)
-                follow_up_questions = [q.strip() for q in follow_up_section.split('\n') if q.strip()]
-            else:
-                answer = response_text
-                follow_up_questions = []
-            return answer.strip(), follow_up_questions
+                follow_up_questions = [
+                    q.strip().lstrip("- ") for q in follow_up_section.split("\n") if q.strip()
+                ]
+
+            # Add references to markdown output
+            markdown_answer = f"{answer.strip()}\n\n**References:**\n{formatted_citations}"
+
+            return markdown_answer, follow_up_questions
+
         else:
-            return "I'm sorry, I couldn't generate an answer at the moment.", []
+            return "I'm sorry, I couldn't generate an answer at the moment.", [], []
 
     except Exception as e:
         logging.error(f"Error generating response with Gemini: {str(e)}")
         raise HTTPException(status_code=500, detail="Error generating response")
+
+
 
 
 @router.post("/ask")
