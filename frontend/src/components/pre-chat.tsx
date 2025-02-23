@@ -34,14 +34,14 @@ const PreChat = () => {
       className="w-full h-full flex flex-col items-center justify-center font-montserrat px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
     >
       {/* Header Section */}
       <motion.div
         className="text-center font-bold py-4 text-gray-600 text-4xl flex items-center justify-center"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
       >
         Welcome to&nbsp;
         <span className="bg-gradient-to-r from-[#4A90E2] via-[#32A852] to-[#008080] bg-clip-text text-transparent font-bold">
@@ -59,7 +59,7 @@ const PreChat = () => {
           hidden: { opacity: 0 },
           visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.15 }, // Slightly increased delay
+            transition: { staggerChildren: 0.1 }, // Slightly increased delay
           },
         }}
       >
@@ -71,8 +71,8 @@ const PreChat = () => {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.03, transition: { duration: 0.1 } }}
             transition={{
-              duration: 0.4,
-              delay: index * 0.15, // Consistent delay per card
+              duration: 0.3,
+              delay: index * 0.1, // Consistent delay per card
               ease: "easeOut",
               type: "spring",
               stiffness: 100,
@@ -99,7 +99,7 @@ const PreChat = () => {
         className="text-lg text-gray-700 font-medium mt-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 1, ease: "easeOut" }}
+        transition={{ duration: 0.2, delay: 0.3, ease: "easeOut" }}
       >
         Ask Me Anything!
       </motion.div>

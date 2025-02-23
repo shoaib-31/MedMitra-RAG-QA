@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Montserrat, Open_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
+import Sidebar from "@/components/sidebar";
 
 const montserrat = Montserrat({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -30,7 +31,10 @@ export default function RootLayout({
       <body
         className={cn(montserrat.variable, openSans.variable, "antialiased")}
       >
-        {children}
+        <div className="flex w-full h-full min-h-screen">
+          <Sidebar />
+          <div className="flex-1 h-screen p-4">{children}</div>
+        </div>
       </body>
     </html>
   );

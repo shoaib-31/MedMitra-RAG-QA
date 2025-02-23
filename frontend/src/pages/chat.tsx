@@ -18,7 +18,7 @@ const ChatPage = () => {
   //   ];
   const messages: ChatMessageInterface[] = [];
   return (
-    <div className="lg:max-w-4xl w-full flex flex-col gap-2 p-4 h-screen">
+    <div className="lg:max-w-4xl w-full flex flex-col gap-2 p-4 h-full">
       <div className="flex-1 overflow-auto no-scrollbar ">
         {messages.length > 0 ? <ChatList messages={messages} /> : <PreChat />}
       </div>

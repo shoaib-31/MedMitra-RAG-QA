@@ -46,7 +46,7 @@ const ChatInput: React.FC = () => {
       className="font-open-sans flex gap-3 items-end w-full mt-6"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 1.2, ease: "easeOut" }}
+      transition={{ duration: 0.2, delay: 0.4, ease: "easeOut" }}
     >
       <textarea
         ref={textareaRef}
