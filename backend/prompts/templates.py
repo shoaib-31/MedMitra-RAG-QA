@@ -1,9 +1,9 @@
 def get_gemini_prompt(question: str, chat_context: list, context_chunks: list, citations: list):
     """Generates the structured prompt for Gemini AI response generation with chat memory."""
-    
+
     # Format chat history with timestamps and roles
     chat_history_text = "\n".join(
-        [f"[{chat['timestamp']}] {chat['role'].capitalize()}: {chat['text']}" for chat in chat_context]
+        [f"[{chat['timestamp'].isoformat()}] {chat['role'].capitalize()}: {chat['message']}" for chat in chat_context]
     ) if chat_context else "No prior context available."
 
     # Use top 5 retrieved chunks for external knowledge
@@ -33,7 +33,7 @@ def get_gemini_prompt(question: str, chat_context: list, context_chunks: list, c
     - After the answer, suggest 2-3 related follow-up questions.
     - Recheck the answer for markdown syntax and readability.
     - Do NOT include links in the answer; use citations instead like [[1]](link).
-    - Do NOT give unnecessary headings like "Answer" when responding.
+    - Do NOT give unnecessary headings like "Answer" when responding but feel free to give headings like References and Follow-up Questions.
     - Provide a list of references at the end if citations are used.
 
     **References:**

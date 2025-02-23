@@ -2,11 +2,19 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SendHorizonal } from "lucide-react";
 import { motion } from "framer-motion";
+import apiClient from "@/lib/axiosInstance";
+import { usePathname } from "next/navigation";
+import { useSetRecoilState } from "recoil";
+import { chatHistoryState } from "@/atoms/chatHistory";
+import { messagesState } from "@/atoms/messages";
 
 const ChatInput: React.FC = () => {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
+  const pathname = usePathname();
+  const session_id = pathname.split("/chat/")[1];
+  const setChatHistoryState = useSetRecoilState(chatHistoryState);
+  const setChatState = useSetRecoilState(messagesState);
   useEffect(() => {
     // Auto-focus the input field when the component mounts
     if (textareaRef.current) {
@@ -34,10 +42,60 @@ const ChatInput: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (text.trim() === "") return;
-    console.log("Message sent:", text); // Replace this with actual send function
-    setText(""); // Clear input after sending
+    const message = text;
+    setText("");
+    setChatState((prev) => [
+      ...prev,
+      {
+        role: "user",
+        message: message,
+        timestamp: new Date().toISOString(),
+      },
+      {
+        role: "bot",
+        message: "Searching through guidelines...",
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+    try {
+      const { data } = await apiClient.post("/ask", {
+        question: message,
+        session_id,
+      });
+      if (!session_id) {
+        window.history.pushState({}, "", `/chat/${data.session_id}`);
+        setChatHistoryState((prev) => [
+          ...prev,
+          {
+            id: data.session_id,
+            title: data.title,
+            date: new Date().toISOString(),
+          },
+        ]);
+      }
+      setChatState((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: "bot",
+          message: data.answer,
+          timestamp: new Date().toISOString(),
+          references: data.references,
+        },
+      ]);
+    } catch (error: any) {
+      setChatState((prev) => [
+        ...prev.slice(0, -1),
+        {
+          role: "bot",
+          message:
+            "Sorry, I am not able to answer this question. Please try again later.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+
     adjustTextareaHeight();
   };
 

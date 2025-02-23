@@ -14,7 +14,6 @@ class Settings(BaseSettings):
 
     # Gemini AI settings
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
-    
     # MongoDB settings
     MONGO_URI: str = os.getenv("MONGO_URI")
 

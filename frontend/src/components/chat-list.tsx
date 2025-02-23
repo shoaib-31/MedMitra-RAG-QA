@@ -10,7 +10,12 @@ const ChatList = ({ messages }: ChatListProps) => {
   return (
     <div className=" ">
       {messages.map((msg, index) => (
-        <ChatMessage key={index} message={msg.message} role={msg.role} />
+        <ChatMessage
+          key={index}
+          message={msg.message}
+          timestamp={msg.timestamp}
+          role={msg.role}
+        />
       ))}
     </div>
   );

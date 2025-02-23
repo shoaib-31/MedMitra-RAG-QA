@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from backend.services.retrieval import retrieve_relevant_chunks
-from backend.services.generation import generate_response_with_gemini
+from backend.services.generation import generate_response_with_gemini, generate_chat_title
 from backend.core.database import chat_collection
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -20,18 +20,36 @@ class QueryRequest(BaseModel):
 async def ask_question(query_request: QueryRequest):
     """Handles user queries by retrieving past context and generating an AI response."""
     try:
-        # If no session_id is provided, generate a new one
-        session_id = query_request.session_id or str(uuid.uuid4())
+        # If no session_id is provided, it's a new conversation
+        if not query_request.session_id:
+            session_id = str(uuid.uuid4())
+            
+            # Generate a title for the new session based on the first question
+            chat_title = await generate_chat_title(query_request.question)
 
-        # Fetch previous chat history from MongoDB
-        previous_chats_cursor = chat_collection.find({"session_id": session_id}).sort("timestamp", -1).limit(5)
-        previous_chats = await previous_chats_cursor.to_list(length=5)
+            # Create a new chat session document
+            chat_session = {
+                "title": chat_title,
+                "session_id": session_id,
+                "messages": []  # List to store message history
+            }
+            
+            # Store session in MongoDB
+            await chat_collection.insert_one(chat_session)
+        else:
+            # Use provided session_id
+            session_id = query_request.session_id
 
-        # Format chat history (include timestamps and role)
-        chat_context = [
-            {"role": chat["role"], "text": chat["text"], "timestamp": chat["timestamp"]}
-            for chat in previous_chats
-        ]
+            # Fetch existing session
+            existing_session = await chat_collection.find_one({"session_id": session_id})
+            if not existing_session:
+                raise HTTPException(status_code=404, detail="Session not found")
+
+        # Retrieve previous chat history from MongoDB
+        previous_chats = existing_session["messages"] if query_request.session_id else []
+
+        # Format chat history for context
+        chat_context = [{"role": msg["role"], "message": msg["message"], "timestamp": msg["timestamp"]} for msg in previous_chats]
 
         # Retrieve relevant external knowledge (RAG)
         retrieved_info, citations = retrieve_relevant_chunks(query_request.question, query_request.top_k)
@@ -41,27 +59,28 @@ async def ask_question(query_request: QueryRequest):
             query_request.question, chat_context, retrieved_info, citations
         )
 
-        # Store user's query in MongoDB
-        user_chat_entry = {
-            "session_id": session_id,
+        # Create chat entries
+        user_message = {
             "role": "user",
-            "text": query_request.question,
-            "timestamp": datetime.datetime.utcnow()
+            "message": query_request.question,
+            "timestamp": datetime.datetime.now()
         }
-        await chat_collection.insert_one(user_chat_entry)
-
-        # Store bot's response in MongoDB
-        bot_chat_entry = {
-            "session_id": session_id,
+        bot_message = {
             "role": "bot",
-            "text": answer,
+            "message": answer,
             "references": citations,
-            "timestamp": datetime.datetime.utcnow()
+            "timestamp": datetime.datetime.now()
         }
-        await chat_collection.insert_one(bot_chat_entry)
+
+        # Update session messages
+        await chat_collection.update_one(
+            {"session_id": session_id},
+            {"$push": {"messages": {"$each": [user_message, bot_message]}}}
+        )
 
         return {
             "session_id": session_id,
+            "title": existing_session["title"] if query_request.session_id else chat_title,
             "question": query_request.question,
             "answer": answer,
             "references": citations,

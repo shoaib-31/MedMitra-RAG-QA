@@ -7,20 +7,17 @@ router = APIRouter()
 async def get_chat_history(session_id: str):
     """Fetch past conversations for a given session."""
     try:
-        chats_cursor = chat_collection.find({"session_id": session_id}).sort("timestamp", 1)
-        chats = await chats_cursor.to_list(length=50)
+        # Retrieve chat session based on session_id
+        chat_session = await chat_collection.find_one({"session_id": session_id})
 
-        if not chats:
+        if not chat_session:
             raise HTTPException(status_code=404, detail="No chat history found for this session.")
 
-        return [
-            {
-                "role": chat["role"],  # "user" or "bot"
-                "text": chat["text"],
-                "timestamp": chat["timestamp"]
-            }
-            for chat in chats
-        ]
+        return {
+            "session_id": chat_session["session_id"],
+            "title": chat_session["title"],
+            "messages": chat_session["messages"]
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving history: {str(e)}")
