@@ -15,8 +15,11 @@ class Settings(BaseSettings):
     # Gemini AI settings
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
     
-    if not PINECONE_API_KEY or not PINECONE_INDEX_NAME or not GEMINI_API_KEY:
-        raise ValueError("Pinecone and Gemini API keys must be provided in the environment.")
+    # MongoDB settings
+    MONGO_URI: str = os.getenv("MONGO_URI")
+
+    if not PINECONE_API_KEY or not PINECONE_INDEX_NAME or not GEMINI_API_KEY or not MONGO_URI:
+        raise ValueError("Pinecone API keys, MongoDB URI and Gemini API keys must be provided in the environment.")
 
     # General app settings
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"

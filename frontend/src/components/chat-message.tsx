@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import { ChatMessageInterface } from "@/interfaces/messge";
 
 const ChatMessage = ({ role, message }: ChatMessageInterface) => {
+  message = message.replace(/\\n/g, "\n");
   return (
     <div
       className={cn(
