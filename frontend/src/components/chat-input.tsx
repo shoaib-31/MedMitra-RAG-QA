@@ -11,15 +11,32 @@ import { messagesState } from "@/atoms/messages";
 const ChatInput: React.FC = () => {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
   const pathname = usePathname();
-  const session_id = pathname.split("/chat/")[1];
+  const [sessionId, setSessionId] = useState<string | null>(
+    pathname.split("/chat/")[1] || null
+  );
+
   const setChatHistoryState = useSetRecoilState(chatHistoryState);
   const setChatState = useSetRecoilState(messagesState);
+
   useEffect(() => {
     // Auto-focus the input field when the component mounts
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
+  }, []);
+
+  useEffect(() => {
+    // Listen for popstate events to sync session ID if user navigates back/forward
+    const handlePopState = () => {
+      setSessionId(window.location.pathname.split("/chat/")[1] || null);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, []);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -44,37 +61,41 @@ const ChatInput: React.FC = () => {
 
   const handleSubmit = async () => {
     if (text.trim() === "") return;
+
     const message = text;
     setText("");
+
     setChatState((prev) => [
       ...prev,
-      {
-        role: "user",
-        message: message,
-        timestamp: new Date().toISOString(),
-      },
+      { role: "user", message, timestamp: new Date().toISOString() },
       {
         role: "bot",
         message: "Searching through guidelines...",
         timestamp: new Date().toISOString(),
       },
     ]);
+
     try {
       const { data } = await apiClient.post("/ask", {
         question: message,
-        session_id,
+        session_id: sessionId,
       });
-      if (!session_id) {
-        window.history.pushState({}, "", `/chat/${data.session_id}`);
+
+      if (!sessionId) {
+        const newSessionId = data.session_id;
+        window.history.pushState({}, "", `/chat/${newSessionId}`);
+        setSessionId(newSessionId); // Update state with the new session ID
+
         setChatHistoryState((prev) => [
           ...prev,
           {
-            id: data.session_id,
+            id: newSessionId,
             title: data.title,
             date: new Date().toISOString(),
           },
         ]);
       }
+
       setChatState((prev) => [
         ...prev.slice(0, -1),
         {
@@ -84,7 +105,7 @@ const ChatInput: React.FC = () => {
           references: data.references,
         },
       ]);
-    } catch (error: any) {
+    } catch (error) {
       setChatState((prev) => [
         ...prev.slice(0, -1),
         {
@@ -101,7 +122,7 @@ const ChatInput: React.FC = () => {
 
   return (
     <motion.div
-      className="font-open-sans flex gap-3 items-end w-full mt-6"
+      className="font-open-sans flex gap-3 items-end w-full mt-0"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: 0.4, ease: "easeOut" }}

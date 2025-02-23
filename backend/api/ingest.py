@@ -1,10 +1,9 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 import os
-import PyPDF2
 from fastembed import TextEmbedding
 from pinecone import Pinecone
-from typing import List
 from backend.core.config import settings
+from backend.services.extraction import extract_text_from_pdf, chunk_text
 
 router = APIRouter()
 
@@ -13,27 +12,6 @@ embedding_model = TextEmbedding()
 
 pc = Pinecone(api_key=settings.PINECONE_API_KEY)
 index = pc.Index(settings.PINECONE_INDEX_NAME)
-
-
-def extract_text_from_pdf(pdf_file) -> str:
-    """Extracts text from a PDF file efficiently."""
-    pdf_reader = PyPDF2.PdfReader(pdf_file)
-    text_content = []
-
-    for page in pdf_reader.pages:
-        extracted_text = page.extract_text()
-        if extracted_text:
-            text_content.append(extracted_text)
-
-    if not text_content:
-        raise HTTPException(status_code=400, detail="Failed to extract text from the PDF.")
-
-    return "\n".join(text_content)
-
-def chunk_text(text: str, max_tokens: int = 300) -> List[str]:
-    """Splits text into manageable chunks (~300 tokens)."""
-    words = text.split()
-    return [" ".join(words[i : i + max_tokens]) for i in range(0, len(words), max_tokens)]
 
 @router.post("/ingest")
 async def ingest_pdf(

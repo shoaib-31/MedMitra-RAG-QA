@@ -1,8 +1,12 @@
 "use client";
-import React from "react";
+
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Form,
   FormField,
@@ -21,24 +25,49 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   author: z.string().min(1, "Author is required"),
   link: z.string().url("Invalid URL"),
-  file: z.instanceof(File, { message: "A file is required" }).or(z.null()),
+  file: z.instanceof(File, { message: "A file is required" }),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
 const Page: React.FC = () => {
+  const [loading, setLoading] = useState(false);
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       author: "",
       link: "",
-      file: null,
+      file: undefined,
     },
   });
 
-  const onSubmit = (data: FormSchema) => {
-    console.log("Form submitted:", data);
+  const onSubmit = async (data: FormSchema) => {
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("author", data.author);
+    formData.append("link", data.link);
+    formData.append("file", data.file);
+
+    try {
+      const serverURL =
+        process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8000";
+      const response = await axios.post(`${serverURL}/ingest`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      toast.success(response.data.message);
+      form.reset();
+    } catch (error: any) {
+      toast.error(
+        "Error uploading file: " +
+          (error.response?.data?.detail || error.message)
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,100 +96,70 @@ const Page: React.FC = () => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[#4A90E2]">Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter document title"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="author"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[#4A90E2]">Author</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter author's name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="link"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-[#4A90E2]">
-                          Reference Link
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter reference link"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name="file"
-                    render={({ field: { onChange } }) => (
-                      <FormItem>
-                        <FormLabel className="text-[#4A90E2]">
-                          Upload File
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={(e) =>
-                              onChange(
-                                e.target.files ? e.target.files[0] : null
-                              )
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4A90E2]">Title</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter document title" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="author"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4A90E2]">Author</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter author's name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="link"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4A90E2]">
+                        Reference Link
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter reference link" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4A90E2]">
+                        Upload File
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.files ? e.target.files[0] : null
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -169,8 +168,9 @@ const Page: React.FC = () => {
                   <Button
                     type="submit"
                     className="w-full bg-[#32A852] hover:bg-[#008080] text-white font-semibold"
+                    disabled={loading}
                   >
-                    Submit Document
+                    {loading ? "Processing..." : "Submit Document"}
                   </Button>
                 </motion.div>
               </form>

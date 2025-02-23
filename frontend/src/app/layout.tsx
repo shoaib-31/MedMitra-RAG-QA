@@ -4,6 +4,7 @@ import { Montserrat, Open_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Sidebar from "@/components/sidebar";
 import Provider from "@/components/provider";
+import { ToastContainer } from "react-toastify";
 
 const montserrat = Montserrat({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -37,6 +38,7 @@ export default function RootLayout({
             <Sidebar />
             <div className="flex-1 h-screen p-4">{children}</div>
           </div>
+          <ToastContainer />
         </Provider>
       </body>
     </html>

@@ -1,6 +1,13 @@
 import { History, Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { format, isToday, isYesterday, subDays, parseISO } from "date-fns";
+import {
+  format,
+  isToday,
+  isYesterday,
+  subDays,
+  parseISO,
+  compareDesc,
+} from "date-fns";
 import { ChatHistoryInterface } from "@/interfaces/chat-history";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,7 +42,15 @@ const ChatHistory: React.FC = () => {
     last30Days: [],
   };
 
-  chatHistory.forEach((chat) => {
+  // Sort chat history by date in descending order (newest first)
+  const sortedHistory = [...chatHistory]
+    .filter((chat) => chat.date)
+    .sort((a, b) =>
+      compareDesc(parseISO(a.date || ""), parseISO(b.date || ""))
+    );
+
+  // Categorize the sorted history
+  sortedHistory.forEach((chat) => {
     const chatDate = parseISO(chat.date);
     if (isToday(chatDate)) {
       categories.today.push(chat);
@@ -49,13 +64,14 @@ const ChatHistory: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-1 flex-col mt-4 rounded-lg p-2 text-sm text-gray-700">
-      <div className="flex font-semibold items-center w-full p-3 gap-2 text-gray-700">
+    <div className="flex flex-1 flex-col mt-4 rounded-lg text-sm text-gray-700 overflow-auto no-scrollbar">
+      <div className="sticky top-0 bg-gray-300 z-10 flex font-semibold items-center w-full p-3 gap-2 text-gray-700 border-b">
         <History size={18} /> Chat History
       </div>
+
       {loading ? (
         <div className="p-4 flex-1 justify-center flex items-center text-center text-gray-500">
-          <Loader2 size={24} className=" animate-spin" />
+          <Loader2 size={24} className="animate-spin" />
         </div>
       ) : (
         <div className="flex flex-col gap-2 w-full">
