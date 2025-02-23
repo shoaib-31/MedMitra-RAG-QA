@@ -3,8 +3,10 @@ import React from "react";
 import { format, isToday, isYesterday, subDays, parseISO } from "date-fns";
 import { ChatHistoryInterface } from "@/interfaces/chat-history";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const ChatHistory: React.FC = () => {
+  const pathname = usePathname();
   const chatHistory: ChatHistoryInterface[] = [
     { id: "1", title: "Water Issues checking disease", date: "2025-02-23" },
     { id: "2", title: "Water Issues", date: "2025-02-22" },
@@ -51,23 +53,30 @@ const ChatHistory: React.FC = () => {
                   : "Last 30 Days"}
               </div>
               <div className="flex flex-col gap-1">
-                {chats.map((chat) => (
-                  <Link key={chat.id} href={`/chat/${chat.id}`}>
-                    <div className="flex items-center justify-between p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 cursor-pointer">
+                {chats.map((chat) => {
+                  const isActive = pathname === `/chat/${chat.id}`;
+                  return (
+                    <Link key={chat.id} href={`/chat/${chat.id}`}>
                       <div
-                        className="text-xs font-medium truncate max-w-[150px]"
-                        title={chat.title}
+                        className={`flex items-center justify-between p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 cursor-pointer ${
+                          isActive ? "bg-gray-200 font-semibold" : ""
+                        }`}
                       >
-                        {chat.title.length > 20
-                          ? chat.title.substring(0, 20) + "..."
-                          : chat.title}
+                        <div
+                          className="text-xs font-medium truncate max-w-[150px]"
+                          title={chat.title}
+                        >
+                          {chat.title.length > 20
+                            ? chat.title.substring(0, 20) + "..."
+                            : chat.title}
+                        </div>
+                        <div className="text-xs text-gray-400 whitespace-nowrap">
+                          {format(parseISO(chat.date), "MMM dd, yyyy")}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-400 whitespace-nowrap">
-                        {format(parseISO(chat.date), "MMM dd, yyyy")}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ) : null
