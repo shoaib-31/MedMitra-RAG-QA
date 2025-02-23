@@ -4,22 +4,16 @@ import PyPDF2
 from fastembed import TextEmbedding
 from pinecone import Pinecone
 from typing import List
-from dotenv import load_dotenv
-
-load_dotenv()
+from backend.core.config import settings
 
 router = APIRouter()
 
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
-
-if not PINECONE_API_KEY or not PINECONE_INDEX_NAME:
-    raise ValueError("PINECONE_API_KEY or PINECONE_INDEX_NAME is not set")
-
 embedding_model = TextEmbedding()
 
-pc = Pinecone(api_key=PINECONE_API_KEY)
-index = pc.Index(PINECONE_INDEX_NAME)
+
+pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+index = pc.Index(settings.PINECONE_INDEX_NAME)
+
 
 def extract_text_from_pdf(pdf_file) -> str:
     """Extracts text from a PDF file efficiently."""
