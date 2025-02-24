@@ -93,10 +93,10 @@ const ChatHistory: React.FC = () => {
                     return (
                       <Link key={chat.id} href={`/chat/${chat.id}`}>
                         <div
-                          className={`flex items-center justify-between p-2 bg-white rounded-md shadow-sm hover:bg-gray-100 cursor-pointer ${
+                          className={`flex items-center justify-between p-2 rounded-md shadow-sm  cursor-pointer ${
                             isActive
-                              ? "bg-gray-300 hover:bg-gray-300 font-semibold"
-                              : ""
+                              ? "bg-gray-200 hover:bg-gray-200 font-semibold"
+                              : "bg-white hover:bg-gray-100"
                           }`}
                         >
                           <div
