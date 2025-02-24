@@ -103,7 +103,7 @@ cd deployment
 docker-compose up --build
 ```
 
----
+## Here, please wait "Application startup complete." appears in logs.
 
 ## 📂 Project Architecture
 
